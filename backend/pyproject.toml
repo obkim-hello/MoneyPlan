@@ -1,0 +1,12 @@
+[tool.poetry]
+name = "moneyplan-backend"
+version = "0.1.0"
+description = "MoneyPlan Backend API"
+authors = ["MoneyPlan"]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
