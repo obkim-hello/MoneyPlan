@@ -17,7 +17,7 @@ class UserLogin(BaseModel):
 
 
 class UserResponse(UserBase):
-    id: int
+    id: str
     is_active: bool
     is_superuser: bool
 

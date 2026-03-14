@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Enum as SQLEnum
+import uuid
+from sqlalchemy import Column, String, Float, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 import enum
 from . import Base, TimestampMixin
@@ -16,8 +17,8 @@ class AlertType(str, enum.Enum):
 class Alert(Base, TimestampMixin):
     __tablename__ = "alerts"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     alert_type = Column(SQLEnum(AlertType), nullable=False, index=True)
     title = Column(String(255), nullable=False)
     message = Column(String(1000), nullable=False)

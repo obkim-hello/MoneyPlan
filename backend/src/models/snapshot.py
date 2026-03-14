@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, Float, ForeignKey, Date
+import uuid
+from sqlalchemy import Column, String, Float, ForeignKey, Date
 from sqlalchemy.orm import relationship
 from . import Base, TimestampMixin
 
@@ -6,8 +7,8 @@ from . import Base, TimestampMixin
 class Snapshot(Base, TimestampMixin):
     __tablename__ = "snapshots"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     date = Column(Date, nullable=False, index=True)
     total_assets = Column(Float, nullable=False)
     total_liabilities = Column(Float, nullable=False)

@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float, Enum as SQLEnum, ForeignKey, Date
+import uuid
+from sqlalchemy import Column, String, Float, Enum as SQLEnum, ForeignKey, Date
 from sqlalchemy.orm import relationship
 import enum
 from . import Base, TimestampMixin
@@ -26,9 +27,11 @@ class HoldingCategory(str, enum.Enum):
 class Holding(Base, TimestampMixin):
     __tablename__ = "holdings"
 
-    id = Column(Integer, primary_key=True, index=True)
-    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    account_id = Column(String(36), ForeignKey("accounts.id"), nullable=False, index=True)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
+    pool_id = Column(String(36), ForeignKey("pools.id"), nullable=True, index=True)
+    allocation_category = Column(String(50), nullable=True, index=True)  # Stock, Bond, Cash, Crypto, Other
     symbol = Column(String(20), nullable=False, index=True)
     name = Column(String(255), nullable=False)
     asset_type = Column(SQLEnum(AssetType), nullable=False, index=True)
@@ -43,3 +46,4 @@ class Holding(Base, TimestampMixin):
 
     account = relationship("Account", backref="holdings")
     user = relationship("User", backref="holdings")
+    pool = relationship("Pool", backref="holdings")

@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float, Enum as SQLEnum, ForeignKey
+import uuid
+from sqlalchemy import Column, String, Float, Enum as SQLEnum, ForeignKey
 from sqlalchemy.orm import relationship
 import enum
 from . import Base, TimestampMixin
@@ -23,8 +24,8 @@ class AccountCategoryType(str, enum.Enum):
 class Account(Base, TimestampMixin):
     __tablename__ = "accounts"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     name = Column(String(255), nullable=False)
     account_type = Column(SQLEnum(AccountType), nullable=False, index=True)
     category = Column(SQLEnum(AccountCategoryType), nullable=False, index=True)
@@ -33,5 +34,6 @@ class Account(Base, TimestampMixin):
     current_balance = Column(Float, default=0.0, nullable=False)
     currency = Column(String(3), default="USD", nullable=False)
     is_active = Column(String(1), default="Y", nullable=False)  # Y/N
+    monarch_id = Column(String(255), nullable=True, index=True)
 
     user = relationship("User", backref="accounts")

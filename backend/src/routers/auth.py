@@ -79,7 +79,7 @@ def get_current_user(
         raise credentials_exception
 
     email: Optional[str] = payload.get("sub")
-    user_id: Optional[int] = payload.get("user_id")
+    user_id: Optional[str] = payload.get("user_id")
     if email is None or user_id is None:
         raise credentials_exception
 

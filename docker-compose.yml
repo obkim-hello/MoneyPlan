@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=postgresql://moneyplan:moneyplan@postgres:5432/moneyplan
       - REDIS_URL=redis://redis:6379/0
@@ -31,7 +33,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:80"
+      - "8080:80"
     depends_on:
       - backend
     restart: unless-stopped
@@ -43,6 +45,8 @@ services:
 
   postgres:
     image: postgres:15-alpine
+    ports:
+      - "5432:5432"
     environment:
       - POSTGRES_USER=moneyplan
       - POSTGRES_PASSWORD=moneyplan

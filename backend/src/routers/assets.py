@@ -13,6 +13,7 @@ router = APIRouter(prefix="/assets", tags=["Assets"])
 
 
 @router.get("/summary")
+@router.get("/summary/", include_in_schema=False)
 def get_asset_summary(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -32,8 +33,8 @@ def get_asset_summary(
             # Total assets = sum of all asset accounts
             total_assets += account.current_balance
 
-            # Cash total = cash and bank accounts
-            if account.account_type in [AccountType.BANK, AccountType.CASH]:
+            # Cash total = bank accounts
+            if account.account_type == AccountType.BANK:
                 cash_total += account.current_balance
 
                 # Check for emergency fund (institution name contains "emergency" or account name contains "emergency")
@@ -54,6 +55,7 @@ def get_asset_summary(
 
 
 @router.get("/holdings", response_model=List[dict])
+@router.get("/holdings/", include_in_schema=False)
 def get_holdings(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -65,6 +67,8 @@ def get_holdings(
         {
             "id": holding.id,
             "account_id": holding.account_id,
+            "pool_id": holding.pool_id,
+            "allocation_category": holding.allocation_category,
             "symbol": holding.symbol,
             "name": holding.name,
             "asset_type": holding.asset_type.value,

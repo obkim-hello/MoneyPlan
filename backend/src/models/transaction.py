@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date, Text
+import uuid
+from sqlalchemy import Column, String, Float, ForeignKey, Date, Text
 from sqlalchemy.orm import relationship
 from . import Base, TimestampMixin
 
@@ -6,9 +7,9 @@ from . import Base, TimestampMixin
 class Transaction(Base, TimestampMixin):
     __tablename__ = "transactions"
 
-    id = Column(Integer, primary_key=True, index=True)
-    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    account_id = Column(String(36), ForeignKey("accounts.id"), nullable=False, index=True)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     date = Column(Date, nullable=False, index=True)
     description = Column(String(500), nullable=False)
     amount = Column(Float, nullable=False, index=True)
