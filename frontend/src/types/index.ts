@@ -3,6 +3,7 @@
 // Asset Summary from /assets/summary/
 export interface AssetSummary {
   total_assets: number;
+  total_liabilities: number;
   cash_total: number;
   emergency_fund: number;
   investment_total: number;
