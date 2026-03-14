@@ -1,0 +1,17 @@
+{
+  "name": "moneyplan",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "npm run dev:backend & npm run dev:frontend",
+    "dev:backend": "cd backend && source venv/bin/activate && python -m uvicorn src.main:app --reload --port 8000 --log-level debug",
+    "dev:frontend": "cd frontend && npm run dev",
+    "install:backend": "cd backend && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "docker:restart": "docker-compose restart"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
