@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ExclamationTriangleIcon, BanknotesIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
 import { getAssetSummary, getHoldings } from '../api/assets';
 import { getAllocationBreakdown, getAllocationHistory, AllocationBreakdown, AllocationHistory } from '../api/allocations';
 import { getPools } from '../api/pools';
@@ -156,35 +157,58 @@ export default function Dashboard() {
               <div className="relative flex h-48 w-48 items-center justify-center">
                 <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 36 36">
                   <circle cx="18" cy="18" r="16" fill="none" className="stroke-slate-100 dark:stroke-slate-700" strokeWidth="3"></circle>
-                  {displayAllocations.slice(0, 1).map((alloc, idx) => (
-                    <circle
-                      key={idx}
-                      cx="18"
-                      cy="18"
-                      r="16"
-                      fill="none"
-                      className="stroke-amber-500"
-                      strokeWidth="3"
-                      strokeDasharray={`${alloc.percentage || 0}, 100`}
-                      strokeLinecap="round"
-                    />
-                  ))}
+                  {displayAllocations.map((alloc, idx) => {
+                    const colors: Record<string, string> = {
+                      Stock: '#3B82F6',
+                      Bond: '#10B981',
+                      Cash: '#F59E0B',
+                      Crypto: '#8B5CF6',
+                      Other: '#6B7280'
+                    };
+                    const color = colors[alloc.name] || colors.Other;
+                    const prevPercentage = displayAllocations.slice(0, idx).reduce((sum, a) => sum + (a.percentage || 0), 0);
+                    return (
+                      <circle
+                        key={idx}
+                        cx="18"
+                        cy="18"
+                        r="16"
+                        fill="none"
+                        stroke={color}
+                        strokeWidth="3"
+                        strokeDasharray={`${alloc.percentage || 0}, 100`}
+                        strokeDashoffset={-prevPercentage}
+                        strokeLinecap="round"
+                      />
+                    );
+                  })}
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-3xl font-bold">100%</span>
-                  <span className="text-[10px] uppercase text-slate-500">Liquid Cash</span>
+                  {displayAllocations.length > 0 ? (
+                    <>
+                      <span className="text-3xl font-bold">{displayAllocations[0].percentage?.toFixed(0) || 0}%</span>
+                      <span className="text-[10px] uppercase text-slate-500">{displayAllocations[0].name}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-3xl font-bold">0%</span>
+                      <span className="text-[10px] uppercase text-slate-500">No Data</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
-            <div className="mt-6 rounded-2xl bg-amber-50 p-4 dark:bg-amber-900/20">
-              <div className="flex gap-3">
-                <span className="text-amber-600 text-lg">⚠️</span>
-                <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-200">
-                  <span className="font-bold block mb-1">Concentration Risk</span>
-                  Your cash ratio is extremely high. Consider diversifying into stocks or bonds to beat inflation.
-                </p>
+            {displayAllocations.length > 0 && displayAllocations[0].name === 'Cash' && displayAllocations[0].percentage > 50 && (
+              <div className="mt-6 rounded-2xl bg-amber-50 p-4 dark:bg-amber-900/20">
+                <div className="flex gap-3">
+                  <span className="text-amber-600 text-lg">⚠️</span>
+                  <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-200">
+                    <span className="font-bold block mb-1">Concentration Risk</span>
+                    Your cash ratio is extremely high. Consider diversifying into stocks or bonds to beat inflation.
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700 lg:col-span-8">
@@ -300,7 +324,7 @@ export default function Dashboard() {
                       pool.category === 'daily' ? 'bg-blue-50 text-blue-500 dark:bg-blue-900/20' :
                       'bg-slate-100 text-slate-500 dark:bg-slate-700'
                     }`}>
-                      {pool.category === 'emergency' ? '🚨' : pool.category === 'daily' ? '☕' : '💰'}
+                      {pool.category === 'emergency' ? <ExclamationTriangleIcon className="w-5 h-5" /> : pool.category === 'daily' ? <CurrencyDollarIcon className="w-5 h-5" /> : <BanknotesIcon className="w-5 h-5" />}
                     </div>
                     <div>
                       <p className="font-bold">{pool.name}</p>

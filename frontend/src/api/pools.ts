@@ -33,8 +33,8 @@ export const assignHoldingToPool = async (holdingId: string, poolId: string | nu
   return response.data;
 };
 
-export const assignHoldingAllocationCategory = async (holdingId: string, allocationCategory: string | null): Promise<{ id: string; allocation_category: string | null }> => {
-  const response = await api.put(`/pools/holdings/${holdingId}/allocation-category/`, { allocation_category: allocationCategory });
+export const assignHoldingAllocation = async (holdingId: string, allocationId: string | null): Promise<{ id: string; allocation_id: string | null }> => {
+  const response = await api.put(`/pools/holdings/${holdingId}/allocation/`, { allocation_id: allocationId });
   return response.data;
 };
 

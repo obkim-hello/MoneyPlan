@@ -31,6 +31,7 @@ class Holding(Base, TimestampMixin):
     account_id = Column(String(36), ForeignKey("accounts.id"), nullable=False, index=True)
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     pool_id = Column(String(36), ForeignKey("pools.id"), nullable=True, index=True)
+    allocation_id = Column(String(36), ForeignKey("allocations.id"), nullable=True, index=True)
     allocation_category = Column(String(50), nullable=True, index=True)  # Stock, Bond, Cash, Crypto, Other
     symbol = Column(String(20), nullable=False, index=True)
     name = Column(String(255), nullable=False)
@@ -47,3 +48,4 @@ class Holding(Base, TimestampMixin):
     account = relationship("Account", backref="holdings")
     user = relationship("User", backref="holdings")
     pool = relationship("Pool", backref="holdings")
+    allocation = relationship("Allocation", backref="holdings")

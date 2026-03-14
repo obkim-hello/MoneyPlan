@@ -140,77 +140,80 @@ def get_allocation_breakdown(
     db: Session = Depends(get_db)
 ):
     """Get allocation breakdown with calculated percentages based on holdings."""
-    # Get all allocations for user
+    import logging
+    logger = logging.getLogger(__name__)
+
+    # Get all allocations for user (for ordering)
     allocations = db.query(Allocation).filter(
         Allocation.user_id == current_user.id
     ).order_by(Allocation.sort_order, Allocation.name).all()
 
-    # Get all holdings for user (only asset accounts)
-    holdings = db.query(Holding).join(Account).filter(
-        Holding.user_id == current_user.id,
-        Account.category == AccountCategoryType.ASSET
+    # Get all holdings for user
+    holdings = db.query(Holding).filter(
+        Holding.user_id == current_user.id
     ).all()
 
-    # Calculate total value
-    total_value = sum(h.current_value or 0 for h in holdings)
+    logger.info(f"=== Total holdings: {len(holdings)} ===")
 
-    # Parse asset types for each allocation
-    allocation_map = {}
-    for a in allocations:
-        # Parse comma-separated asset types
-        types = [t.strip().lower() for t in a.asset_types.split(",") if t.strip()]
-        allocation_map[a.id] = {
-            "name": a.name,
-            "asset_types": types,
-            "value": 0
+    # Calculate total value and group by allocation (using allocation_id foreign key)
+    allocation_values = {}
+    total_value = 0
+
+    for h in holdings:
+        # Get value - use current_value or calculate from quantity * price
+        holding_value = h.current_value or 0
+        if holding_value == 0 and h.quantity and h.current_price:
+            holding_value = h.quantity * h.current_price
+
+        if holding_value == 0:
+            continue
+
+        total_value += holding_value
+
+        # Use allocation relationship if set (via allocation_id), otherwise use asset_type as fallback
+        if h.allocation:
+            alloc_name = h.allocation.name
+            alloc_id = h.allocation_id
+        elif h.asset_type:
+            alloc_name = h.asset_type.value.capitalize()
+            alloc_id = None
+        else:
+            alloc_name = "Uncategorized"
+            alloc_id = None
+
+        key = alloc_id or alloc_name
+        allocation_values[key] = {
+            "name": alloc_name,
+            "value": allocation_values.get(key, {}).get("value", 0) + holding_value
         }
+        logger.info(f"  {h.symbol}: allocation='{alloc_name}' (id={alloc_id}), value={holding_value}")
 
-    # Calculate value for each allocation
-    for holding in holdings:
-        holding_type = holding.asset_type.value.lower() if holding.asset_type else ""
-        matched = False
-
-        for alloc_id, alloc_info in allocation_map.items():
-            if holding_type in alloc_info["asset_types"]:
-                alloc_info["value"] += holding.current_value or 0
-                matched = True
-                break
-
-    # Build result
+    # Build result - maintain allocation order from database
     result = []
-    uncategorized_value = 0
 
-    for a in allocations:
-        info = allocation_map[a.id]
-        value = info["value"]
-        percentage = (value / total_value * 100) if total_value > 0 else 0
+    # First add allocations in order
+    for alloc in allocations:
+        if alloc.id in allocation_values:
+            info = allocation_values[alloc.id]
+            value = info["value"]
+            percentage = (value / total_value * 100) if total_value > 0 else 0
+            result.append({
+                "name": info["name"],
+                "percentage": round(percentage, 2),
+                "value": round(value, 2)
+            })
 
-        result.append({
-            "name": info["name"],
-            "percentage": round(percentage, 2),
-            "value": round(value, 2)
-        })
-
-    # Add uncategorized
-    for holding in holdings:
-        holding_type = holding.asset_type.value.lower() if holding.asset_type else ""
-        matched = False
-
-        for alloc_info in allocation_map.values():
-            if holding_type in alloc_info["asset_types"]:
-                matched = True
-                break
-
-        if not matched:
-            uncategorized_value += holding.current_value or 0
-
-    if uncategorized_value > 0:
-        percentage = (uncategorized_value / total_value * 100) if total_value > 0 else 0
-        result.append({
-            "name": "Uncategorized",
-            "percentage": round(percentage, 2),
-            "value": round(uncategorized_value, 2)
-        })
+    # Add any fallback categories (from holdings without allocation_id)
+    for key, info in allocation_values.items():
+        if key not in [a.id for a in allocations]:
+            value = info["value"]
+            if value > 0:
+                percentage = (value / total_value * 100) if total_value > 0 else 0
+                result.append({
+                    "name": info["name"],
+                    "percentage": round(percentage, 2),
+                    "value": round(value, 2)
+                })
 
     # Add total
     result.append({
@@ -219,6 +222,7 @@ def get_allocation_breakdown(
         "value": round(total_value, 2)
     })
 
+    logger.info(f"Final result: {result}")
     return result
 
 

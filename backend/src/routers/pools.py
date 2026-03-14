@@ -229,6 +229,60 @@ class HoldingAllocationCategoryRequest(BaseModel):
     allocation_category: Optional[str] = None
 
 
+class HoldingAllocationRequest(BaseModel):
+    allocation_id: Optional[str] = None
+
+
+@router.put("/holdings/{holding_id}/allocation", status_code=status.HTTP_200_OK)
+@router.put("/holdings/{holding_id}/allocation/", status_code=status.HTTP_200_OK, include_in_schema=False)
+def assign_holding_allocation(
+    holding_id: str,
+    assign_data: HoldingAllocationRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Assign or unassign a holding to an allocation using allocation_id."""
+    # First just find by ID (for debugging)
+    holding = db.query(Holding).filter(Holding.id == holding_id).first()
+    if not holding:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Holding {holding_id} not found"
+        )
+
+    # Then verify user owns it
+    if holding.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to modify this holding"
+        )
+
+    # Validate allocation_id if provided
+    if assign_data.allocation_id:
+        from ..models.allocation import Allocation
+        allocation = db.query(Allocation).filter(
+            Allocation.id == assign_data.allocation_id,
+            Allocation.user_id == current_user.id
+        ).first()
+        if not allocation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Allocation not found"
+            )
+
+    holding.allocation_id = assign_data.allocation_id
+    # Clear the old string field
+    holding.allocation_category = None
+    db.commit()
+    db.refresh(holding)
+
+    return {
+        "id": holding.id,
+        "account_id": holding.account_id,
+        "allocation_id": holding.allocation_id,
+    }
+
+
 @router.put("/holdings/{holding_id}/allocation-category", status_code=status.HTTP_200_OK)
 @router.put("/holdings/{holding_id}/allocation-category/", status_code=status.HTTP_200_OK, include_in_schema=False)
 def assign_holding_allocation_category(
@@ -237,7 +291,7 @@ def assign_holding_allocation_category(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Assign or unassign a holding to an allocation category."""
+    """Assign or unassign a holding to an allocation category (legacy)."""
     holding = db.query(Holding).filter(
         Holding.id == holding_id,
         Holding.user_id == current_user.id
